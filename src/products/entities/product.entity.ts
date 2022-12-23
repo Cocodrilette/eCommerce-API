@@ -2,8 +2,16 @@
  * An entity represents a table in the database
  */
 
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  // BeforeUpdate,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { SlugParser } from '../../common/lib/slug';
 
+const slugParser = new SlugParser() as SlugParser;
 @Entity()
 export class Product {
   @PrimaryGeneratedColumn('uuid')
@@ -29,4 +37,11 @@ export class Product {
 
   @Column('text', { nullable: false })
   gender: string;
+
+  @BeforeInsert()
+  parseSlug() {
+    this.slug = slugParser.parse(this.name);
+  }
+
+  // @BeforeUpdate()
 }

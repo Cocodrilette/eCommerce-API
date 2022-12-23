@@ -7,4 +7,5 @@ export const JoiValidationSchema = Joi.object({
   POSTGRES_HOST: Joi.string(),
   POSTGRES_PORT: Joi.number(),
   POSTGRES_USERNAME: Joi.string(),
+  DEFAULT_LIMIT: Joi.number().default(10),
 });

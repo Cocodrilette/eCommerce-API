@@ -6,4 +6,5 @@ export const evnConfig = () => ({
   postgresDbName: process.env.POSTGRES_NAME,
   postgresHost: process.env.POSTGRES_HOST,
   postgresPort: parseInt(process.env.POSTGRES_PORT),
+  defaultLimit: parseInt(process.env.DEFAULT_LIMIT),
 });
