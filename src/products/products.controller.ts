@@ -44,6 +44,11 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto);
   }
 
+  @Delete('seed')
+  removeAll() {
+    return this.productsService.removeAll();
+  }
+
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.remove(id);

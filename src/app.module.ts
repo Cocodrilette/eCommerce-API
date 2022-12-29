@@ -2,17 +2,19 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { evnConfig } from './config/env.config';
+import configuration from './config/configuration';
 import { JoiValidationSchema } from './config/joiValidationSchema';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [evnConfig],
+      load: [configuration],
       validationSchema: JoiValidationSchema,
+      isGlobal: true,
     }),
 
     TypeOrmModule.forRoot({
@@ -34,6 +36,8 @@ import { CommonModule } from './common/common.module';
     ProductsModule,
 
     CommonModule,
+
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

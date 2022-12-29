@@ -4,18 +4,20 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { validate as isUUID } from 'uuid';
 
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product } from './entities/product.entity';
+import { Product } from './entities';
 import { ResponseParser } from '../common/lib/response';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { ObjectParser } from '../common/lib/object';
+import { ProductImage } from './entities';
 
 @Injectable()
 export class ProductsService {
@@ -24,23 +26,44 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
+    private readonly dataSource: DataSource,
     private readonly responseParser: ResponseParser,
     private readonly configService: ConfigService,
     private readonly objectParser: ObjectParser,
-  ) {}
+  ) {
+    // console.log(this.defaultLimit);
+    // console.log(this.environment);
+  }
+  defaultLimit = this.configService.get<number>('defaultLimit');
+  environment = this.configService.get<string>('environment');
 
-  private readonly defaultLimit =
-    this.configService.get<number>('defaultLimit');
   //
   // * CREATE
   //
   async create(createProductDto: CreateProductDto) {
     try {
-      const product = this.productRepository.create(createProductDto);
+      const { images = [], ...productDetails } = createProductDto;
+
+      const product = this.productRepository.create({
+        ...productDetails,
+        images: images.map((image) =>
+          /**
+           * When you sent an image from the client, this image is just a string.
+           * The entity required a instance of a ProductImage, so you need to parse that string.
+           * TypeORM infers the rest of the fields.
+           */
+          this.productImageRepository.create({ url: image }),
+        ),
+      });
 
       await this.productRepository.save(product);
 
-      return this.responseParser.createdSuccessfully(product, 'Product');
+      return this.responseParser.createdSuccessfully(
+        { ...product, images },
+        'Product',
+      );
     } catch (error) {
       if (error.code === '23505') {
         throw new BadRequestException(error.detail);
@@ -52,11 +75,15 @@ export class ProductsService {
   // * FIND ALL
   //
   async findAll({ offset = 0, limit = this.defaultLimit }: PaginationDto) {
+    console.log(offset, limit);
     try {
       const products = await this.productRepository.find({
         where: {},
         take: limit,
         skip: offset,
+        relations: {
+          images: true,
+        },
       });
 
       if (products.length === 0) throw new NotFoundException();
@@ -67,8 +94,6 @@ export class ProductsService {
         'Products',
       );
     } catch (error) {
-      console.log(error);
-
       if (error.status === 404) {
         throw new NotFoundException('Product database empty');
       }
@@ -98,6 +123,7 @@ export class ProductsService {
             name: searchTerm.toUpperCase(),
             slug: searchTerm.toLowerCase(),
           })
+          .leftJoinAndSelect('product.images', 'productImages')
           .getOne();
       }
 
@@ -105,7 +131,6 @@ export class ProductsService {
 
       return this.responseParser.successQuery(product, null, 'Product');
     } catch (error) {
-      console.log(error);
       if (error.status === 404)
         throw new NotFoundException(`No matches found for: [ ${searchTerm} ]`);
 
@@ -116,6 +141,7 @@ export class ProductsService {
   // * UPDATE
   //
   async update(id: string, updateProductDto: UpdateProductDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
     try {
       /**
        * -> Find a product in the DTO
@@ -123,28 +149,50 @@ export class ProductsService {
        * -> Replace the properties passed through the `updateProductDto`
        */
 
+      // * Check if the request body is empty and throw an error if it is
       if (this.objectParser.isEmpty(updateProductDto))
         throw new BadRequestException();
 
+      const { images, ...productFields } = updateProductDto;
+
       const product = await this.productRepository.preload({
         id,
-        ...updateProductDto,
+        ...productFields,
       });
+
+      /**
+       * QueryRunner allow us to take a single connection from the connection pool or
+       * the default data source.
+       * By this way, we can make more than one query through a single connection.
+       * details: https://orkhan.gitbook.io/typeorm/docs/query-runner#using-queryrunner
+       * ! IMPORTANT:
+       * ! make sure to release it when it is not needed anymore to make it available to the connection pool again
+       */
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
+        product.images = images.map((image) =>
+          this.productImageRepository.create({ url: image }),
+        );
+
+        await queryRunner.manager.save(product);
+        await queryRunner.commitTransaction();
+        await queryRunner.release();
+      } else {
+        product.images = await this.productImageRepository.findBy({
+          product: { id },
+        });
+      }
 
       if (!product) throw new NotFoundException();
 
-      /**
-       * When updating - the entity `@BeforeInsert()` decorator will not be executed.
-       * You need to parse the name explicitly by doing it like the line below
-       */
-      // product.slug = this.slugParser.parse(product.name);
-
-      return this.responseParser.updatedSuccessfully(
-        'Product',
-        await this.productRepository.save(product),
-        id,
-      );
+      return this.responseParser.updatedSuccessfully('Product', product, id);
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+
       if (error.status === 404)
         throw new NotFoundException(`Product with id: [ ${id} ] not found`);
 
@@ -162,13 +210,34 @@ export class ProductsService {
   async remove(id: string) {
     try {
       const product = await this.productRepository.findOneBy({ id });
-      if (!product)
-        return new NotFoundException(`Product with the id ${id} not found`);
+      if (!product) throw new NotFoundException();
 
       await this.productRepository.remove(product);
 
       return this.responseParser.deletedSuccessfully('Product', id);
     } catch (error) {
+      if (error.status === 404)
+        throw new NotFoundException(`Product with the id ${id} not found`);
+      this.handleException(error);
+    }
+  }
+
+  async removeAll() {
+    // console.log(this.environment);
+    try {
+      // ! make this validation
+      if (this.environment !== 'dev') {
+        throw new UnauthorizedException();
+      }
+
+      const query = this.productRepository.createQueryBuilder('product');
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      if (error.status === 401) {
+        throw new UnauthorizedException(
+          'This action is highly destructive. Is not allowed to do it in production',
+        );
+      }
       this.handleException(error);
     }
   }

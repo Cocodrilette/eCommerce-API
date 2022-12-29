@@ -42,6 +42,12 @@ $ yarn start:dev
 $ yarn start:prod
 ```
 
+## Running the SEED
+
+```bash
+GET http://localhost:5000/api/v1/products/seed
+```
+
 ## Test
 
 ```bash
