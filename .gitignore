@@ -37,3 +37,4 @@ lerna-debug.log*
 # Only local
 .env
 postgres/
+__todo__.txt

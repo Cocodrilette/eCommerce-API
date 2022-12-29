@@ -4,7 +4,7 @@
 
 import {
   BeforeInsert,
-  // BeforeUpdate,
+  BeforeUpdate,
   Column,
   Entity,
   PrimaryGeneratedColumn,
@@ -38,10 +38,12 @@ export class Product {
   @Column('text', { nullable: false })
   gender: string;
 
+  @Column('text', { array: true, default: [] })
+  tags: string[];
+
   @BeforeInsert()
+  @BeforeUpdate()
   parseSlug() {
     this.slug = slugParser.parse(this.name);
   }
-
-  // @BeforeUpdate()
 }
