@@ -33,8 +33,7 @@ export class ProductsService {
     private readonly configService: ConfigService,
     private readonly objectParser: ObjectParser,
   ) {
-    // console.log(this.defaultLimit);
-    // console.log(this.environment);
+    console.log(process.env.NODE_ENV);
   }
   defaultLimit = this.configService.get<number>('defaultLimit');
   environment = this.configService.get<string>('environment');

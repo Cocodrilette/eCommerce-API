@@ -14,7 +14,7 @@ import { SlugParser } from '../../common/lib/slug';
 import { ProductImage } from './';
 
 const slugParser = new SlugParser() as SlugParser;
-@Entity()
+@Entity({ name: 'products' })
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;

@@ -30,7 +30,7 @@ import { SeedModule } from './seed/seed.module';
        * * The line below turn off this feat in production
        * * by checking the `NODE_ENV` env var
        *  */
-      synchronize: process.env.NODE_ENV ? false : true,
+      synchronize: process.env.NODE_ENV === 'dev' ? true : false,
     }),
 
     ProductsModule,
