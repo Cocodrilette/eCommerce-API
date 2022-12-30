@@ -32,9 +32,7 @@ export class ProductsService {
     private readonly responseParser: ResponseParser,
     private readonly configService: ConfigService,
     private readonly objectParser: ObjectParser,
-  ) {
-    console.log(process.env.NODE_ENV);
-  }
+  ) {}
   defaultLimit = this.configService.get<number>('defaultLimit');
   environment = this.configService.get<string>('environment');
 
@@ -222,9 +220,7 @@ export class ProductsService {
   }
 
   async removeAll() {
-    // console.log(this.environment);
     try {
-      // ! make this validation
       if (this.environment !== 'dev') {
         throw new UnauthorizedException();
       }

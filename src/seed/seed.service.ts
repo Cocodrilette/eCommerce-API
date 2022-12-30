@@ -1,27 +1,40 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ProductsService } from '../products/products.service';
 import { initialData } from './data/seed-data';
 
 @Injectable()
 export class SeedService {
+  private readonly logger = new Logger('SeedService');
+
   constructor(private readonly productsService: ProductsService) {}
   async runSeed() {
     try {
-      const isSuccess = await this.insertNewProducts();
-      if (!isSuccess) {
-        throw new InternalServerErrorException();
-      }
+      const result = await this.insertNewProducts();
+
+      if (result.status === 401)
+        throw new UnauthorizedException({
+          message: result.response,
+        });
+
       return 'seed executed';
     } catch (error) {
-      console.log(error);
+      this.logger.error(error);
+      if (error.status === 401)
+        throw new UnauthorizedException(error.response.message);
+
       throw new InternalServerErrorException('Seed generation failed');
     }
   }
 
   private async insertNewProducts() {
     try {
-      await this.productsService.removeAll();
-      console.log('Products deleted');
+      const res = await this.productsService.removeAll();
+
       const products = initialData.products;
 
       const insertPromises = [];
@@ -32,9 +45,9 @@ export class SeedService {
 
       await Promise.all(insertPromises);
 
-      return true;
+      return res;
     } catch (error) {
-      return false;
+      return error;
     }
   }
 }
