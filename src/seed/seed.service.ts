@@ -21,13 +21,13 @@ export class SeedService {
           message: result.response,
         });
 
-      return 'seed executed';
+      return this.sendResult();
     } catch (error) {
       this.logger.error(error);
       if (error.status === 401)
         throw new UnauthorizedException(error.response.message);
 
-      throw new InternalServerErrorException('Seed generation failed');
+      return this.sendResult(error);
     }
   }
 
@@ -49,5 +49,19 @@ export class SeedService {
     } catch (error) {
       return error;
     }
+  }
+
+  private sendResult(error?: Error) {
+    if (error) {
+      throw new InternalServerErrorException({
+        ok: false,
+        message: 'Seed generation failed',
+      });
+    }
+
+    return {
+      ok: true,
+      message: 'Seed generated successfully',
+    };
   }
 }

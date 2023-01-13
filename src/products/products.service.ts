@@ -176,7 +176,7 @@ export class ProductsService {
 
         await queryRunner.manager.save(product);
         await queryRunner.commitTransaction();
-        await queryRunner.release();
+        await queryRunner.release(); // * connection released
       } else {
         product.images = await this.productImageRepository.findBy({
           product: { id },
