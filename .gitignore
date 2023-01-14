@@ -38,4 +38,6 @@ lerna-debug.log*
 .env
 postgres/
 __todo__.txt
-
+static/products/*
+static/uploads/*
+public/assets/*

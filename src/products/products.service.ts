@@ -72,7 +72,6 @@ export class ProductsService {
   // * FIND ALL
   //
   async findAll({ offset = 0, limit = this.defaultLimit }: PaginationDto) {
-    console.log(offset, limit);
     try {
       const products = await this.productRepository.find({
         where: {},

@@ -1,14 +1,18 @@
+import { join } from 'path';
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import configuration from './config/configuration';
-import { JoiValidationSchema } from './config/joiValidationSchema';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
+
+import { AppService } from './app.service';
 import { ProductsModule } from './products/products.module';
 import { CommonModule } from './common/common.module';
 import { SeedModule } from './seed/seed.module';
 import { FilesModule } from './files/files.module';
+import { AppController } from './app.controller';
+import { JoiValidationSchema } from './config/joiValidationSchema';
 
 @Module({
   imports: [
@@ -32,6 +36,10 @@ import { FilesModule } from './files/files.module';
        * * by checking the `NODE_ENV` env var
        *  */
       synchronize: process.env.NODE_ENV === 'dev' ? true : false,
+    }),
+
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
     }),
 
     ProductsModule,
