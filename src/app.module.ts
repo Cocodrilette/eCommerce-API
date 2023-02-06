@@ -13,6 +13,7 @@ import { SeedModule } from './seed/seed.module';
 import { FilesModule } from './files/files.module';
 import { AppController } from './app.controller';
 import { JoiValidationSchema } from './config/joiValidationSchema';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -49,6 +50,8 @@ import { JoiValidationSchema } from './config/joiValidationSchema';
     SeedModule,
 
     FilesModule,
+
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
