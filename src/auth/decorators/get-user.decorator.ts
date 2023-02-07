@@ -9,8 +9,6 @@ export const GetUser = createParamDecorator(
     const req = context.switchToHttp().getRequest();
     const user = req.user;
 
-    console.log({ user });
-
     if (!user)
       throw new InternalServerErrorException('No user found (request): user');
 

@@ -7,11 +7,13 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { SlugParser } from '../../common/lib/slug';
 import { ProductImage } from './';
+import { User } from '../../auth/entities/user.entity';
 
 const slugParser = new SlugParser() as SlugParser;
 @Entity()
@@ -49,6 +51,9 @@ export class Product {
   })
   images?: ProductImage[];
 
+  @ManyToOne(() => User, (user) => user.products, { eager: true })
+  user: User;
+  //
   @BeforeInsert()
   @BeforeUpdate()
   parseSlug() {

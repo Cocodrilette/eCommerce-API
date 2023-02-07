@@ -5,10 +5,11 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { User } from '../../entities/user.entity';
 import { BadRequestException } from '@nestjs/common';
-import { META_ROLES } from '../../auth.controller';
+import { Observable } from 'rxjs';
+
+import { User } from '../../entities/user.entity';
+import { META_ROLES } from '../../decorators';
 
 @Injectable()
 export class UserRoleGuard implements CanActivate {
@@ -17,10 +18,7 @@ export class UserRoleGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const validRoles = this.reflector.get(
-      META_ROLES,
-      context.getHandler(),
-    ) as string;
+    const validRoles = this.reflector.get(META_ROLES, context.getHandler());
 
     if (!validRoles) return true;
     if (validRoles.length === 0) return true;
@@ -28,14 +26,14 @@ export class UserRoleGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const user: User = req.user;
 
+    console.log({ validRoles, user });
+
     if (!user) throw new BadRequestException('User not found');
 
     for (const role of user.roles) {
       if (validRoles.includes(role)) return true;
     }
 
-    throw new ForbiddenException(
-      `User: [ ${user.id} ] are not authorized to access this route`,
-    );
+    throw new ForbiddenException();
   }
 }

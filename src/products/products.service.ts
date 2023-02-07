@@ -18,6 +18,7 @@ import { ResponseParser } from '../common/lib/response';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { ObjectParser } from '../common/lib/object';
 import { ProductImage } from './entities';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -39,7 +40,7 @@ export class ProductsService {
   //
   // * CREATE
   //
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       const { images = [], ...productDetails } = createProductDto;
 
@@ -53,6 +54,7 @@ export class ProductsService {
            */
           this.productImageRepository.create({ url: image }),
         ),
+        user,
       });
 
       await this.productRepository.save(product);
@@ -136,7 +138,7 @@ export class ProductsService {
   //
   // * UPDATE
   //
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       /**
@@ -173,6 +175,7 @@ export class ProductsService {
           this.productImageRepository.create({ url: image }),
         );
 
+        product.user = user;
         await queryRunner.manager.save(product);
         await queryRunner.commitTransaction();
         await queryRunner.release(); // * connection released

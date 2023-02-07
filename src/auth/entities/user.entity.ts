@@ -1,9 +1,11 @@
 import { IsString } from 'class-validator';
+import { Product } from '../../products/entities/product.entity';
 import {
   BeforeInsert,
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -31,6 +33,9 @@ export class User {
 
   @Column('text', { array: true, default: ['USER'] })
   roles: string[];
+
+  @OneToMany(() => Product, (product) => product.user)
+  products: Product[];
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {
