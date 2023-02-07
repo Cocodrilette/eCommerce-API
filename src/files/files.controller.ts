@@ -13,7 +13,9 @@ import { fileFilter, fileNamer } from './helpers';
 import { diskStorage } from 'multer';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Files')
 @Controller('files')
 export class FilesController {
   constructor(
@@ -22,7 +24,9 @@ export class FilesController {
   ) {}
 
   @Get('product/:ruid' /*Resource ID*/)
-  // *
+  @ApiResponse({
+    status: 200,
+  })
   findOneProductImage(@Res() res: Response, @Param('ruid') ruid: string) {
     const result = this.filesService.findOneProductImage(ruid);
 
@@ -40,7 +44,10 @@ export class FilesController {
       }),
     }),
   )
-  // *
+  @ApiResponse({
+    status: 200,
+    description: 'File uploaded',
+  })
   uploadProductImage(@UploadedFile() file: Express.Multer.File) {
     const secureUrl = `${this.configService.get('hostAPI')}/files/product/${
       file.filename

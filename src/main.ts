@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { AppModule } from './app.module';
 
 const PORT = process.env.PORT || 5000;
 
@@ -20,6 +22,14 @@ async function bootstrap() {
       },
     }),
   );
+
+  const config = new DocumentBuilder()
+    .setTitle('Teslo RESTFul API')
+    .setDescription('Teslo shop endpoint')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('doc', app, document);
 
   await app.listen(PORT);
   logger.log(`App running on port: ${PORT}`);

@@ -1,7 +1,6 @@
 export class ResponseParser {
   createdSuccessfully(object: any, name: string) {
     return {
-      statusCode: 200,
       message: `${name} created successfully`,
       object,
     };
@@ -10,7 +9,6 @@ export class ResponseParser {
   successQuery(objects: any[] | any, count = null, name: string) {
     if (count) {
       return {
-        statusCode: 200,
         message: `${name} query performed correctly`,
         count,
         objects,
@@ -18,7 +16,6 @@ export class ResponseParser {
     }
 
     return {
-      statusCode: 200,
       message: `${name} query performed correctly`,
       object: objects,
     };
@@ -26,7 +23,6 @@ export class ResponseParser {
 
   deletedSuccessfully(name: string, id: string) {
     return {
-      statusCode: 200,
       message: `${name} deleted successfully`,
       id,
     };
@@ -34,7 +30,6 @@ export class ResponseParser {
 
   updatedSuccessfully(name: string, object: any, id: string) {
     return {
-      statusCode: 200,
       message: `${name} updated successfully`,
       id,
       updateProduct: object,
