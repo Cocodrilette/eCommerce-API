@@ -14,6 +14,7 @@ import { FilesModule } from './files/files.module';
 import { AppController } from './app.controller';
 import { JoiValidationSchema } from './config/joiValidationSchema';
 import { AuthModule } from './auth/auth.module';
+import { MessagesWsModule } from './messages-ws/messages-ws.module';
 
 @Module({
   imports: [
@@ -52,6 +53,8 @@ import { AuthModule } from './auth/auth.module';
     FilesModule,
 
     AuthModule,
+
+    MessagesWsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
