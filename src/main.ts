@@ -11,6 +11,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Boostrap');
 
+  app.enableCors();
+
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
